@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>เฝ้าระวังน้ำท่วม กทม.–สมุทรปราการ</title>
-<meta name="description" content="ติดตามฝนและน้ำท่วมรายพื้นที่ กรุงเทพฯ และสมุทรปราการ พร้อมเรดาร์ฝนและรายงานจากประชาชน">
+<meta name="description" content="ติดตามฝน น้ำท่วม จราจร และอุบัติเหตุ กรุงเทพฯ และสมุทรปราการ จากข้อมูลส่วนกลาง">
 <meta property="og:title" content="เฝ้าระวังน้ำท่วม กทม.–สมุทรปราการ">
-<meta property="og:description" content="เรดาร์ฝน ปริมาณฝนรายเขต และรายงานน้ำท่วมจากพื้นที่จริง">
+<meta property="og:description" content="เรดาร์ฝน ปริมาณฝนรายเขต จราจรและอุบัติเหตุสด">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -16,8 +16,8 @@
   color-scheme:light;
   --bg:#F2F5F6; --surface:#FFFFFF; --sunk:#E7EDEF; --ink:#13222A; --muted:#5A6D76; --line:#D5DEE2;
   --accent:#0D6A87; --accent-ink:#FFFFFF;
-  --s0:#8A9AA2; --s1:#2F7FC1; --s2:#C08410; --s3:#C23E2B; --stale:#B7C3C8;
-  --s1bg:#E3EFF9; --s2bg:#FBF0DA; --s3bg:#F9E3DF; --s0bg:#ECF0F1;
+  --r0:#9AA8AE; --r1:#5BA3D9; --r2:#1F6FB2; --r3:#C98A12; --r4:#C23E2B;
+  --r1bg:#E6F1FA; --r2bg:#DCE9F6; --r3bg:#FBF0DA; --r4bg:#F9E3DF; --r0bg:#ECF0F1;
   --display:"Anuphan","IBM Plex Sans Thai",system-ui,sans-serif;
   --body:"IBM Plex Sans Thai",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,monospace;
@@ -26,8 +26,8 @@
   color-scheme:dark;
   --bg:#0E181D; --surface:#15232A; --sunk:#1B2C34; --ink:#E4EDF0; --muted:#95A9B1; --line:#27404A;
   --accent:#4FB3D1; --accent-ink:#06222C;
-  --s0:#7D9098; --s1:#5AA8E8; --s2:#E3A93A; --s3:#EE6B55; --stale:#4A5F68;
-  --s1bg:#16324A; --s2bg:#3A2D12; --s3bg:#44201B; --s0bg:#1E2E35;
+  --r0:#6E8189; --r1:#7FBDEB; --r2:#4A9BE0; --r3:#E3A93A; --r4:#EE6B55;
+  --r1bg:#17303F; --r2bg:#16324A; --r3bg:#3A2D12; --r4bg:#44201B; --r0bg:#1E2E35;
 }}
 *{box-sizing:border-box}
 html,body{margin:0}
@@ -40,87 +40,48 @@ h2{font-size:1.1rem;font-weight:600}
 .muted{color:var(--muted)}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
 a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:end;justify-content:space-between}
 .clock{font-size:.85rem;color:var(--muted)}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
-.banner{background:var(--s2bg);border-radius:10px;padding:12px 16px;font-size:.9rem}
 .summary{display:flex;flex-wrap:wrap;gap:8px}
-.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:.85rem;background:var(--s0bg);color:var(--ink);white-space:nowrap}
-.dot{width:10px;height:10px;border-radius:50%;flex:none;background:var(--stale);display:inline-block}
-.dot.st0{background:var(--s0)} .dot.st1{background:var(--s1)} .dot.st2{background:var(--s2)} .dot.st3{background:var(--s3)}
-.chip.st1{background:var(--s1bg)} .chip.st2{background:var(--s2bg)} .chip.st3{background:var(--s3bg)}
-.grid2{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:20px;align-items:start}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:.85rem;background:var(--r0bg);color:var(--ink);white-space:nowrap}
+.dot{width:10px;height:10px;border-radius:50%;flex:none;display:inline-block;background:var(--r0)}
+.c0 .dot,.dot.c0{background:var(--r0)} .c1 .dot,.dot.c1{background:var(--r1)} .c2 .dot,.dot.c2{background:var(--r2)} .c3 .dot,.dot.c3{background:var(--r3)} .c4 .dot,.dot.c4{background:var(--r4)}
+.chip.c1{background:var(--r1bg)} .chip.c2{background:var(--r2bg)} .chip.c3{background:var(--r3bg)} .chip.c4{background:var(--r4bg)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start}
 @media (max-width:880px){.grid2{grid-template-columns:1fr}}
 .stack{display:flex;flex-direction:column;gap:14px}
 .headrow{display:flex;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;align-items:center}
-#map{height:440px;border-radius:8px;border:1px solid var(--line);background:var(--sunk);z-index:0}
-@media (max-width:480px){#map{height:340px}}
+.toolrow{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:.85rem}
+.toolrow label{display:flex;gap:6px;align-items:center;cursor:pointer}
+#map,#tmap{height:460px;border-radius:8px;border:1px solid var(--line);background:var(--sunk);position:relative;z-index:0}
+@media (max-width:480px){#map,#tmap{height:360px}}
 .leaflet-container{font-family:var(--body)}
-.leaflet-popup-content{font-size:.85rem;line-height:1.5;margin:10px 12px}
+.tmap-empty{position:absolute;inset:0;display:grid;place-content:center;gap:8px;text-align:center;padding:16px;font-size:.9rem;color:var(--muted)}
+.note{font-size:.82rem;color:var(--muted)}
 .tabs{display:flex;gap:6px;flex-wrap:wrap}
 .tab{font:inherit;font-size:.88rem;padding:5px 11px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
 .tab[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.areas{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
-.area{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--stale);border-radius:8px;padding:10px 12px;display:grid;gap:5px;align-content:start}
-.area.st0{border-left-color:var(--s0)} .area.st1{border-left-color:var(--s1)} .area.st2{border-left-color:var(--s2)} .area.st3{border-left-color:var(--s3)}
+.areas{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.area{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--r0);border-radius:8px;padding:10px 12px;display:grid;gap:6px;align-content:start}
+.area.c1{border-left-color:var(--r1)} .area.c2{border-left-color:var(--r2)} .area.c3{border-left-color:var(--r3)} .area.c4{border-left-color:var(--r4)}
 .area.hl{box-shadow:0 0 0 2px var(--accent)}
 .area-top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
 .area h3{font-size:.98rem;font-weight:600}
 .prov-tag{font-size:.72rem;color:var(--muted);white-space:nowrap}
-.status{font-size:.86rem;font-weight:500;display:flex;align-items:center;gap:6px}
-.detail{font-size:.83rem;color:var(--muted);overflow-wrap:anywhere}
-.rain{display:flex;gap:4px 12px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);padding:6px 8px;background:var(--sunk);border-radius:6px}
-.rain b{color:var(--ink);font-weight:500}
-.rain .now{color:var(--s1);font-weight:600}
+.status{font-size:.86rem;font-weight:500;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.now{font-size:.75rem;font-weight:600;color:var(--accent-ink);background:var(--r2);padding:1px 8px;border-radius:999px}
+.figs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;font-size:.78rem;color:var(--muted);background:var(--sunk);border-radius:6px;padding:6px 8px}
+.figs b{display:block;color:var(--ink);font-size:.92rem;font-weight:500}
 .links{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.82rem}
-.linkbtn{background:none;border:0;padding:0;font:inherit;color:var(--accent);cursor:pointer;text-decoration:underline}
-form{display:grid;gap:12px}
-label{font-size:.85rem;font-weight:500;display:grid;gap:4px}
-select,input,textarea{font:inherit;font-size:.95rem;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%}
-textarea{min-height:64px;resize:vertical}
-fieldset{border:0;margin:0;padding:0}
-legend{font-size:.85rem;font-weight:500;padding:0;margin-bottom:6px}
-.levels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
-.lv{position:relative;display:block}
-.lv input{position:absolute;opacity:0;inset:0;width:100%;height:100%;cursor:pointer;margin:0}
-.lv span{display:flex;gap:8px;align-items:center;padding:8px 10px;border-radius:8px;border:1px solid var(--line);font-size:.86rem;line-height:1.3;font-weight:400}
-.lv input:checked + span{border-color:var(--ink);background:var(--sunk);font-weight:600}
-.lv input:focus-visible + span{outline:2px solid var(--accent);outline-offset:2px}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-@media (max-width:480px){.row2{grid-template-columns:1fr}}
-.primary{font:inherit;font-weight:600;padding:10px 14px;border-radius:8px;border:0;background:var(--accent);color:var(--accent-ink);cursor:pointer}
-.primary:disabled{opacity:.5;cursor:default}
-.note{font-size:.82rem;color:var(--muted)}
-.toast{font-size:.86rem;min-height:1.3em}
-.feed{list-style:none;margin:0;padding:0}
-.feed li{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;padding:10px 0;border-top:1px solid var(--line)}
-.feed li:first-child{border-top:0}
-.feed .dot{margin-top:7px}
-.meta{font-size:.78rem;color:var(--muted)}
+.scale{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.8rem;color:var(--muted)}
+.scale span{display:inline-flex;gap:5px;align-items:center}
 .sources{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
 .src{display:grid;gap:2px;padding:10px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--line);text-decoration:none;color:var(--ink)}
 .src b{font-weight:600;color:var(--accent)}
 .src span{font-size:.82rem;color:var(--muted)}
-details.admin{font-size:.82rem;color:var(--muted)}
-details.admin input{margin-top:6px;max-width:260px}
 footer{font-size:.8rem;color:var(--muted)}
-#tmap{height:480px;border-radius:8px;border:1px solid var(--line);background:var(--sunk);position:relative}
-@media (max-width:480px){#tmap{height:380px}}
-.tmap-empty{position:absolute;inset:0;display:grid;place-content:center;gap:8px;text-align:center;padding:16px;font-size:.9rem;color:var(--muted)}
-.toolrow{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:.85rem}
-.toolrow label{display:flex;flex-direction:row;gap:6px;align-items:center;font-weight:400}
-.toolrow input[type=checkbox]{width:auto}
-.types{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
-@media (max-width:480px){.types{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.ghost{font:inherit;font-size:.85rem;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
-.ghost[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);font-weight:600}
-.pinrow{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
-.inc{display:inline-grid;place-content:center;width:22px;height:22px;border-radius:5px;color:#fff;font:600 12px/1 var(--body);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.35)}
-.inc.accident{background:var(--s3)} .inc.jam{background:var(--s2)} .inc.closed{background:#6B4FA0}
-.tag{display:inline-block;font-size:.72rem;padding:1px 7px;border-radius:999px;background:var(--sunk);color:var(--ink);margin-right:4px}
-.tag.accident{background:var(--s3bg)} .tag.jam{background:var(--s2bg)} .tag.closed{background:var(--s0bg)}
-#map.picking{cursor:crosshair}
 </style>
 </head>
 <body>
@@ -133,103 +94,64 @@ footer{font-size:.8rem;color:var(--muted)}
     <div class="clock"><span id="now" class="num"></span> · <span id="sync">กำลังโหลด…</span></div>
   </header>
 
-  <div class="banner" id="setup" hidden>ยังไม่ได้ตั้งค่า <code>SCRIPT_URL</code> ในไฟล์ index.html ส่วนเรดาร์และปริมาณฝนใช้ได้แล้ว แต่ยังบันทึกรายงานไม่ได้ ดูขั้นตอนใน README.md</div>
-
   <div class="summary" id="summary" aria-live="polite"></div>
 
   <div class="grid2">
-    <div class="stack">
-      <section class="panel stack" aria-labelledby="map-h">
-        <div class="headrow">
-          <h2 id="map-h">แผนที่และเรดาร์ฝน</h2>
-          <label style="display:flex;gap:6px;align-items:center;font-weight:400;font-size:.85rem"><input type="checkbox" id="radar-on" checked style="width:auto"> เรดาร์ฝน <span id="radar-time" class="num muted"></span></label>
+    <section class="panel stack" aria-labelledby="map-h">
+      <div class="headrow">
+        <h2 id="map-h">เรดาร์ฝน</h2>
+        <label class="toolrow"><input type="checkbox" id="radar-on" checked> แสดงเรดาร์ <span id="radar-time" class="num muted"></span></label>
+      </div>
+      <div id="map" role="region" aria-label="แผนที่เรดาร์ฝน"></div>
+      <div class="scale" aria-label="เกณฑ์สีตามฝนสะสม 24 ชม.">
+        <span><span class="dot c0"></span>ไม่มีฝน</span><span><span class="dot c1"></span>ฝนเล็กน้อย</span><span><span class="dot c2"></span>ฝนปานกลาง</span><span><span class="dot c3"></span>ฝนหนัก</span><span><span class="dot c4"></span>ฝนหนักมาก</span>
+      </div>
+    </section>
+
+    <section class="panel stack" aria-labelledby="tmap-h">
+      <div class="headrow">
+        <h2 id="tmap-h">จราจรและอุบัติเหตุ</h2>
+        <div class="toolrow">
+          <label for="t-traffic"><input type="checkbox" id="t-traffic" checked> สีจราจร</label>
+          <label for="t-events"><input type="checkbox" id="t-events" checked> เหตุการณ์</label>
+          <label for="t-cams"><input type="checkbox" id="t-cams"> CCTV</label>
         </div>
-        <div id="map" role="region" aria-label="แผนที่พื้นที่เฝ้าระวัง"></div>
-        <div class="note">จุดกลมคือสถานะน้ำท่วมรายพื้นที่ (24 ชม.) · สี่เหลี่ยมคือเหตุบนถนนที่แจ้งเข้ามา (6 ชม.): <span class="inc accident" style="width:16px;height:16px;font-size:9px">อ</span> อุบัติเหตุ <span class="inc jam" style="width:16px;height:16px;font-size:9px">ต</span> รถติดหนัก <span class="inc closed" style="width:16px;height:16px;font-size:9px">ป</span> ถนนปิด · เรดาร์จาก RainViewer</div>
-      </section>
-
-      <section class="panel stack" aria-labelledby="tmap-h">
-        <div class="headrow">
-          <h2 id="tmap-h">จราจรและเหตุบนถนน (สด)</h2>
-          <div class="toolrow">
-            <label for="t-traffic"><input type="checkbox" id="t-traffic" checked> สีจราจร</label>
-            <label for="t-events"><input type="checkbox" id="t-events" checked> อุบัติเหตุ/เหตุการณ์</label>
-            <label for="t-cams"><input type="checkbox" id="t-cams"> กล้อง CCTV</label>
-          </div>
-        </div>
-        <div id="tmap" role="region" aria-label="แผนที่จราจร"><div class="tmap-empty" id="tmap-empty">กำลังโหลดแผนที่จราจร…</div></div>
-        <div class="note">ข้อมูลจราจรและเหตุการณ์จาก Longdo Traffic แตะไอคอนบนแผนที่เพื่อดูรายละเอียด · เทียบกับ <a href="https://www.google.com/maps/@13.72,100.62,11z/data=!5m1!1e1" target="_blank" rel="noopener">Google Maps จราจร</a></div>
-      </section>
-
-      <section class="stack" aria-labelledby="list-h">
-        <div class="headrow">
-          <h2 id="list-h">รายพื้นที่</h2>
-          <div class="tabs" role="group" aria-label="เลือกจังหวัด">
-            <button class="tab" id="tab-all" data-p="all" aria-pressed="true">ทั้งหมด</button>
-            <button class="tab" id="tab-bkk" data-p="bkk" aria-pressed="false">กทม.</button>
-            <button class="tab" id="tab-spk" data-p="spk" aria-pressed="false">สมุทรปราการ</button>
-          </div>
-        </div>
-        <div class="areas" id="areas"></div>
-        <div class="note">ปริมาณฝนเป็นค่าจากแบบจำลองสภาพอากาศ (Open-Meteo) ไม่ใช่สถานีวัดจริง ใช้ดูแนวโน้ม</div>
-      </section>
-    </div>
-
-    <div class="stack">
-      <section class="panel" aria-labelledby="form-h">
-        <h2 id="form-h" style="margin-bottom:10px">แจ้งสถานการณ์</h2>
-        <form id="rf">
-          <fieldset><legend>เรื่องที่แจ้ง</legend><div class="types" id="types" role="group" aria-label="ประเภทเรื่อง"></div></fieldset>
-          <label for="f-area">พื้นที่ <select id="f-area" required></select></label>
-          <fieldset id="lv-wrap"><legend>ระดับน้ำ</legend><div class="levels" id="levels"></div></fieldset>
-          <div class="pinrow">
-            <button type="button" class="ghost" id="pin-map" aria-pressed="false">ปักหมุดบนแผนที่</button>
-            <button type="button" class="ghost" id="pin-gps">ใช้ตำแหน่งฉัน</button>
-            <span class="note" id="pin-status">ไม่ได้ปักหมุด</span>
-          </div>
-          <div class="row2">
-            <label for="f-road">ถนน / ซอย / จุด <input id="f-road" maxlength="80" placeholder="เช่น ถ.สุขสวัสดิ์ หน้าตลาด"></label>
-            <label for="f-name">ผู้แจ้ง <input id="f-name" maxlength="40" placeholder="ชื่อหรือตำแหน่ง"></label>
-          </div>
-          <label for="f-note">รายละเอียด <textarea id="f-note" maxlength="300" placeholder="ความสูงน้ำประมาณ รถผ่านได้หรือไม่"></textarea></label>
-          <button class="primary" id="f-submit" type="submit">บันทึกรายงาน</button>
-          <div class="toast" id="toast" role="status"></div>
-        </form>
-      </section>
-
-      <section class="panel" aria-labelledby="feed-h">
-        <h2 id="feed-h" style="margin-bottom:6px">รายงานล่าสุด</h2>
-        <ul class="feed" id="feed"></ul>
-        <details class="admin"><summary>ผู้ดูแล</summary>
-          <label for="admin-key" style="font-weight:400">รหัสผู้ดูแล (เพื่อลบรายงาน)</label>
-          <input id="admin-key" type="password" autocomplete="off">
-        </details>
-      </section>
-    </div>
+      </div>
+      <div id="tmap" role="region" aria-label="แผนที่จราจร"><div class="tmap-empty" id="tmap-empty">กำลังโหลดแผนที่จราจร…</div></div>
+      <div class="note">ข้อมูลจาก Longdo Traffic แตะไอคอนเพื่อดูรายละเอียดอุบัติเหตุ งานซ่อมถนน หรือน้ำท่วมขัง</div>
+    </section>
   </div>
+
+  <section class="stack" aria-labelledby="list-h">
+    <div class="headrow">
+      <h2 id="list-h">ปริมาณฝนรายพื้นที่</h2>
+      <div class="tabs" role="group" aria-label="เลือกจังหวัด">
+        <button class="tab" id="tab-all" data-p="all" aria-pressed="true">ทั้งหมด</button>
+        <button class="tab" id="tab-bkk" data-p="bkk" aria-pressed="false">กทม.</button>
+        <button class="tab" id="tab-spk" data-p="spk" aria-pressed="false">สมุทรปราการ</button>
+      </div>
+    </div>
+    <div class="areas" id="areas"></div>
+    <div class="note">ระดับฝนตามเกณฑ์กรมอุตุนิยมวิทยา (ฝนสะสม 24 ชม.): เล็กน้อย 0.1–10 มม. · ปานกลาง 10.1–35 มม. · หนัก 35.1–90 มม. · หนักมาก มากกว่า 90 มม. · ตัวเลขจากแบบจำลอง Open-Meteo ใช้ดูแนวโน้ม ไม่ใช่ค่าจากสถานีวัด</div>
+  </section>
 
   <section class="stack" aria-labelledby="src-h">
     <h2 id="src-h">แหล่งข้อมูลทางการ</h2>
     <div class="sources">
-      <a class="src" href="https://www.google.com/maps/@13.72,100.62,11z/data=!5m1!1e1" target="_blank" rel="noopener"><b>Google Maps · สภาพจราจร</b><span>ถนนปิดหรือรถติดหนักจากน้ำท่วม</span></a>
       <a class="src" href="https://weather.bangkok.go.th/" target="_blank" rel="noopener"><b>เรดาร์ฝน กทม.</b><span>สำนักการระบายน้ำ ฝนสะสม ระดับน้ำในคลอง</span></a>
       <a class="src" href="https://weather.tmd.go.th/" target="_blank" rel="noopener"><b>เรดาร์กรมอุตุนิยมวิทยา</b><span>ภาพเรดาร์และแนวฝน</span></a>
       <a class="src" href="https://www.tmd.go.th/weather/region/central" target="_blank" rel="noopener"><b>พยากรณ์ภาคกลาง</b><span>ประกาศเตือนและพยากรณ์รายวัน</span></a>
       <a class="src" href="https://www.thaiwater.net/" target="_blank" rel="noopener"><b>ThaiWater (สสน.)</b><span>ฝนรายสถานี ระดับน้ำ น้ำขึ้นน้ำลง</span></a>
-      <div class="src"><b>สายด่วน</b><span>ปภ. <span class="num">1784</span> · กทม. <span class="num">1555</span></span></div>
+      <a class="src" href="https://www.google.com/maps/@13.72,100.62,11z/data=!5m1!1e1" target="_blank" rel="noopener"><b>Google Maps · สภาพจราจร</b><span>เทียบสภาพจราจรอีกแหล่ง</span></a>
+      <div class="src"><b>สายด่วน</b><span>ปภ. <span class="num">1784</span> · กทม. <span class="num">1555</span> · จส.100 <span class="num">1137</span></span></div>
     </div>
   </section>
 
-  <footer>ข้อมูลรายงานมาจากผู้ใช้งาน ตรวจสอบกับหน่วยงานก่อนตัดสินใจเดินทาง · ข้อมูลฝน: Open-Meteo.com (CC BY 4.0) · เรดาร์: RainViewer · จราจร: Longdo Traffic · แผนที่: © OpenStreetMap</footer>
+  <footer>ข้อมูลฝน: Open-Meteo.com (CC BY 4.0) · เรดาร์: RainViewer · จราจร: Longdo Traffic · แผนที่: © OpenStreetMap · ตรวจสอบประกาศทางการก่อนตัดสินใจเดินทาง</footer>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-/* ===== ตั้งค่า ===== */
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyhbBmy31nPdyTzXaJVMRyl2Jzchyn4OyL8CpQAN1ukvQ55_PRcE6iZbV6BJE5pVlJD/exec";
-const LONGDO_KEY = "6782512d8f94242e84340b8cdda7db91";   // คีย์ Longdo Map API (ฟรี) สำหรับแผนที่จราจร/อุบัติเหตุ — ดู README
-/* ================== */
-
 const AREAS=[
  {id:"donmueang",n:"ดอนเมือง / หลักสี่",p:"bkk",lat:13.91,lng:100.59},
  {id:"bangkhen",n:"บางเขน / สายไหม",p:"bkk",lat:13.88,lng:100.65},
@@ -254,52 +176,35 @@ const AREAS=[
  {id:"bangsaothong",n:"บางเสาธง",p:"spk",lat:13.58,lng:100.79},
  {id:"bangbo",n:"บางบ่อ",p:"spk",lat:13.56,lng:100.86}
 ];
-const LV=["ปกติ / แห้ง","ฝนตก","น้ำขัง รอระบาย","น้ำท่วมสูง รถเล็กผ่านลำบาก"];
-const TYPES={flood:{t:"น้ำท่วม / ฝน",s:""},accident:{t:"อุบัติเหตุ",s:"อ"},jam:{t:"รถติดหนัก",s:"ต"},closed:{t:"ถนนปิด / สิ่งกีดขวาง",s:"ป"}};
-const WINDOW=24*3600e3, INC_WINDOW=6*3600e3;
+// เกณฑ์กรมอุตุนิยมวิทยา (ฝนสะสม 24 ชม.)
+const CAT=["ไม่มีฝน","ฝนเล็กน้อย","ฝนปานกลาง","ฝนหนัก","ฝนหนักมาก"];
+const cat=mm=>mm<0.1?0:mm<=10?1:mm<=35?2:mm<=90?3:4;
 const byId=Object.fromEntries(AREAS.map(a=>[a.id,a]));
 const $=s=>document.querySelector(s);
-let reports=[], rain={}, prov="all", hl=null, ftype="flood", pin=null, picking=false;
+let rain={}, prov="all", hl=null;
 
-const fmt=new Intl.DateTimeFormat("th-TH",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit",timeZone:"Asia/Bangkok"});
 const fmtT=new Intl.DateTimeFormat("th-TH",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Bangkok"});
-function ago(ts){const m=Math.round((Date.now()-ts)/60000);if(m<1)return"เมื่อสักครู่";if(m<60)return m+" นาทีที่แล้ว";const h=Math.round(m/60);if(h<24)return h+" ชม.ที่แล้ว";return fmt.format(ts)}
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+function mm(v){return v==null?"–":(v<10?v.toFixed(1):Math.round(v))+" มม."}
 function gmaps(a){return `https://www.google.com/maps/@${a.lat},${a.lng},14z/data=!5m1!1e1`}
 function gsearch(a){return `https://www.google.com/maps/search/${encodeURIComponent("น้ำท่วม "+a.n.split(" / ")[0])}/@${a.lat},${a.lng},13z`}
-const isFlood=r=>(r.type||"flood")==="flood";
-function latestFor(id){const now=Date.now();return reports.filter(r=>isFlood(r)&&r.area===id&&now-r.ts<WINDOW).sort((a,b)=>b.ts-a.ts)[0]||null}
-function incidents(){const now=Date.now();return reports.filter(r=>!isFlood(r)&&now-r.ts<INC_WINDOW)}
-function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
-function toast(t){$("#toast").textContent=t}
-function mm(v){return v==null?"–":(v<10?v.toFixed(1):Math.round(v))+" มม."}
-function nearestArea(lat,lng){let b=AREAS[0],d=1e9;AREAS.forEach(a=>{const x=(a.lat-lat)**2+(a.lng-lng)**2;if(x<d){d=x;b=a}});return b.id}
 
-/* ---------- Main map (Leaflet) ---------- */
+/* ---------- Radar map ---------- */
 const map=L.map("map").setView([13.73,100.63],10);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,attribution:"© OpenStreetMap"}).addTo(map);
 let radarLayer=null;
-const markers={}, incLayer=L.layerGroup().addTo(map);
-let pinMarker=null;
+const markers={};
 AREAS.forEach(a=>{
   const m=L.circleMarker([a.lat,a.lng],{radius:8,weight:2,color:"#fff",fillOpacity:.9}).addTo(map);
-  m.on("click",()=>{if(!picking)focusArea(a.id)});
+  m.on("click",()=>focusArea(a.id));
   markers[a.id]=m;
 });
 function renderMarkers(){
   AREAS.forEach(a=>{
-    const r=latestFor(a.id),k=r?r.level:-1,w=rain[a.id];
-    const col=k<0?cssVar("--stale"):cssVar("--s"+k);
-    const raining=w&&w.now>0;
-    markers[a.id].setStyle({fillColor:col,radius:(k>=2?11:8)+(raining?3:0),color:raining?cssVar("--s1"):"#fff"});
-    markers[a.id].bindTooltip(`${esc(a.n)}<br>${r?LV[k]:"ยังไม่มีรายงานน้ำท่วม"}${w?`<br>ฝน 24 ชม. ${mm(w.past24)} · 6 ชม.ข้างหน้า ${w.prob}%`:""}`,{direction:"top"});
-  });
-  incLayer.clearLayers();
-  incidents().forEach(r=>{
-    const lat=Number(r.lat),lng=Number(r.lng),a=byId[r.area];
-    const pos=(lat&&lng)?[lat,lng]:[a.lat+.004,a.lng+.004];
-    const icon=L.divIcon({className:"",html:`<span class="inc ${r.type}">${TYPES[r.type].s}</span>`,iconSize:[22,22],iconAnchor:[11,11]});
-    L.marker(pos,{icon}).bindPopup(`<b>${TYPES[r.type].t}</b><br>${esc([r.road,r.note].filter(Boolean).join(" · "))||esc(a.n)}<br><span style="color:#777">${ago(r.ts)}${r.name?" · "+esc(r.name):""}${(lat&&lng)?"":" · ตำแหน่งโดยประมาณ"}</span>`).addTo(incLayer);
+    const w=rain[a.id],k=w?cat(w.past24):0,raining=w&&w.now>0;
+    markers[a.id].setStyle({fillColor:w?cssVar("--r"+k):cssVar("--r0"),radius:8+k+(raining?2:0),color:raining?cssVar("--r2"):"#fff"});
+    markers[a.id].bindTooltip(`${esc(a.n)}${w?`<br>${CAT[k]} · 24 ชม. ${mm(w.past24)}<br>6 ชม.ข้างหน้า ${mm(w.next6)} · ${w.prob}%`:""}`,{direction:"top"});
   });
 }
 async function loadRadar(){
@@ -314,30 +219,11 @@ async function loadRadar(){
 }
 $("#radar-on").addEventListener("change",e=>{if(!radarLayer)return;e.target.checked?radarLayer.addTo(map):map.removeLayer(radarLayer)});
 
-/* ---------- Pin location ---------- */
-function setPin(lat,lng,label){
-  pin={lat:+lat.toFixed(5),lng:+lng.toFixed(5)};
-  if(pinMarker)pinMarker.setLatLng([lat,lng]);else pinMarker=L.marker([lat,lng]).addTo(map);
-  $("#f-area").value=nearestArea(lat,lng);
-  $("#pin-status").innerHTML=`${label} <span class="num">${pin.lat}, ${pin.lng}</span> · <button type="button" class="linkbtn" id="pin-clear">ล้าง</button>`;
-  $("#pin-clear").addEventListener("click",clearPin);
-}
-function clearPin(){pin=null;if(pinMarker){map.removeLayer(pinMarker);pinMarker=null}$("#pin-status").textContent="ไม่ได้ปักหมุด"}
-function setPicking(on){picking=on;$("#pin-map").setAttribute("aria-pressed",String(on));$("#map").classList.toggle("picking",on);if(on){$("#pin-status").textContent="แตะจุดบนแผนที่ด้านบน";$("#map").scrollIntoView({block:"center"})}}
-$("#pin-map").addEventListener("click",()=>setPicking(!picking));
-map.on("click",e=>{if(!picking)return;setPicking(false);setPin(e.latlng.lat,e.latlng.lng,"ปักหมุดแล้ว");$("#rf").scrollIntoView({block:"center"})});
-$("#pin-gps").addEventListener("click",()=>{
-  if(!navigator.geolocation){$("#pin-status").textContent="อุปกรณ์นี้ไม่รองรับการระบุตำแหน่ง";return}
-  $("#pin-status").textContent="กำลังหาตำแหน่ง…";
-  navigator.geolocation.getCurrentPosition(p=>{setPin(p.coords.latitude,p.coords.longitude,"ตำแหน่งปัจจุบัน");map.setView([p.coords.latitude,p.coords.longitude],14)},
-    ()=>{$("#pin-status").textContent="ระบุตำแหน่งไม่ได้ ลองปักหมุดบนแผนที่แทน"},{enableHighAccuracy:true,timeout:10000});
-});
-
 /* ---------- Traffic map (Longdo) ---------- */
 let lmap=null;
 function initLongdo(){
   const box=$("#tmap");
-  if(typeof longdo==="undefined"){$("#tmap-empty").innerHTML=`โหลดสคริปต์ Longdo ไม่ได้ (คีย์หรือโดเมนไม่ผ่าน)<br><a href="https://www.google.com/maps/@13.72,100.62,11z/data=!5m1!1e1" target="_blank" rel="noopener">เปิดดูจราจรใน Google Maps</a>`;return}
+  if(typeof longdo==="undefined"){$("#tmap-empty").innerHTML=`โหลดแผนที่จราจรไม่ได้ (คีย์หรือโดเมนไม่ผ่าน)<br><a href="https://www.google.com/maps/@13.72,100.62,11z/data=!5m1!1e1" target="_blank" rel="noopener">เปิดดูจราจรใน Google Maps</a>`;return}
   try{
     $("#tmap-empty").remove();
     lmap=new longdo.Map({placeholder:box,zoom:11,location:{lon:100.62,lat:13.72},lastView:false});
@@ -350,8 +236,7 @@ function initLongdo(){
 }
 function syncLongdo(){
   if(!lmap)return;
-  const T=longdo.Layers.TRAFFIC;
-  try{$("#t-traffic").checked?lmap.Layers.add(T):lmap.Layers.remove(T)}catch(e){}
+  try{$("#t-traffic").checked?lmap.Layers.add(longdo.Layers.TRAFFIC):lmap.Layers.remove(longdo.Layers.TRAFFIC)}catch(e){}
   try{$("#t-events").checked?lmap.Overlays.load(longdo.Overlays.events):lmap.Overlays.unload(longdo.Overlays.events)}catch(e){}
   try{$("#t-cams").checked?lmap.Overlays.load(longdo.Overlays.cameras):lmap.Overlays.unload(longdo.Overlays.cameras)}catch(e){}
 }
@@ -370,113 +255,46 @@ async function loadRain(){
       t.forEach((ti,x)=>{if(ti<=now)past24+=p[x]||0;else{next6+=p[x]||0;prob=Math.max(prob,pr[x]||0)}});
       rain[a.id]={now:d.current.precipitation||0,past24,next6,prob};
     });
-  }catch(e){console.warn("rain",e)}
-}
-
-/* ---------- Reports (Apps Script) ---------- */
-async function loadReports(){
-  if(!SCRIPT_URL){$("#sync").textContent="ยังไม่เชื่อมที่เก็บรายงาน";return}
-  try{
-    const j=await (await fetch(SCRIPT_URL+"?t="+Date.now())).json();
-    if(!j.ok)throw new Error(j.error);
-    reports=(j.reports||[]).map(r=>({...r,type:TYPES[r.type]?r.type:"flood"}))
-      .filter(r=>byId[r.area]&&(!isFlood(r)||(r.level>=0&&r.level<=3)));
-    $("#sync").textContent="ซิงก์ "+fmtT.format(Date.now());
-  }catch(e){$("#sync").textContent="ดึงรายงานไม่ได้ จะลองใหม่"}
-}
-async function post(body){
-  const r=await fetch(SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)});
-  const j=await r.json();if(!j.ok)throw new Error(j.error||"ผิดพลาด");return j;
+    $("#sync").textContent="อัปเดตฝน "+fmtT.format(Date.now());
+  }catch(e){$("#sync").textContent="ดึงข้อมูลฝนไม่ได้ จะลองใหม่"}
 }
 
 /* ---------- Render ---------- */
 function renderSummary(){
-  const c=[0,0,0,0];let none=0,raining=0;
-  AREAS.forEach(a=>{const r=latestFor(a.id);r?c[r.level]++:none++;if(rain[a.id]&&rain[a.id].now>0)raining++});
-  const inc=incidents(),ic=t=>inc.filter(r=>r.type===t).length;
-  $("#summary").innerHTML=[3,2,1,0].map(k=>`<span class="chip st${k}"><span class="dot st${k}"></span>${LV[k]} <b class="num">${c[k]}</b></span>`).join("")+
-   `<span class="chip"><span class="dot"></span>ยังไม่มีรายงาน <b class="num">${none}</b></span>`+
-   (Object.keys(rain).length?`<span class="chip st1">แบบจำลอง: ฝนกำลังตก <b class="num">${raining}</b> พื้นที่</span>`:"")+
-   `<span class="chip st3">อุบัติเหตุ 6 ชม. <b class="num">${ic("accident")}</b></span><span class="chip st2">รถติดหนัก <b class="num">${ic("jam")}</b></span><span class="chip">ถนนปิด <b class="num">${ic("closed")}</b></span>`;
+  if(!Object.keys(rain).length){$("#summary").innerHTML="";return}
+  const c=[0,0,0,0,0];let raining=0,soon=0;
+  AREAS.forEach(a=>{const w=rain[a.id];if(!w)return;c[cat(w.past24)]++;if(w.now>0)raining++;if(w.prob>=60)soon++});
+  $("#summary").innerHTML=[4,3,2,1,0].map(k=>`<span class="chip c${k}"><span class="dot"></span>${CAT[k]} <b class="num">${c[k]}</b></span>`).join("")+
+    `<span class="chip c2">ฝนกำลังตก <b class="num">${raining}</b> พื้นที่</span><span class="chip c3">โอกาสฝน ≥60% ใน 6 ชม. <b class="num">${soon}</b> พื้นที่</span>`;
 }
 function renderAreas(){
-  const inc=incidents();
-  const score=x=>(x.r?x.r.level*10:-10)+(rain[x.a.id]?Math.min(rain[x.a.id].past24,50)/10:0)+inc.filter(r=>r.area===x.a.id).length*5;
-  const list=AREAS.filter(a=>prov==="all"||a.p===prov).map(a=>({a,r:latestFor(a.id)})).sort((x,y)=>score(y)-score(x));
-  $("#areas").innerHTML=list.map(({a,r})=>{const w=rain[a.id],ai=inc.filter(i=>i.area===a.id);return `
-    <article class="area ${r?"st"+r.level:""} ${hl===a.id?"hl":""}" id="area-${a.id}">
+  const score=a=>{const w=rain[a.id];return w?w.past24+w.next6*2+(w.now>0?50:0):0};
+  const list=AREAS.filter(a=>prov==="all"||a.p===prov).sort((x,y)=>score(y)-score(x));
+  $("#areas").innerHTML=list.map(a=>{const w=rain[a.id],k=w?cat(w.past24):0;return `
+    <article class="area c${k} ${hl===a.id?"hl":""}" id="area-${a.id}">
       <div class="area-top"><h3>${esc(a.n)}</h3><span class="prov-tag">${a.p==="bkk"?"กทม.":"สมุทรปราการ"}</span></div>
-      <div class="status">${r?`<span class="dot st${r.level}"></span>${LV[r.level]}`:`<span class="muted">ยังไม่มีรายงานน้ำท่วมใน 24 ชม.</span>`}</div>
-      ${r?`<div class="detail">${esc([r.road,r.note].filter(Boolean).join(" · "))}${r.road||r.note?"<br>":""}${ago(r.ts)}${r.name?" · "+esc(r.name):""}</div>`:""}
-      ${ai.length?`<div class="detail">${ai.map(i=>`<span class="tag ${i.type}">${TYPES[i.type].t}</span>${esc(i.road||"")}`).join("<br>")}</div>`:""}
-      ${w?`<div class="rain">${w.now>0?`<span class="now">ฝนกำลังตก</span>`:""}<span>24 ชม. <b class="num">${mm(w.past24)}</b></span><span>6 ชม.ข้างหน้า <b class="num">${mm(w.next6)}</b> · <b class="num">${w.prob}%</b></span></div>`:""}
-      <div class="links"><a href="${gmaps(a)}" target="_blank" rel="noopener">Google Maps จราจร</a><a href="${gsearch(a)}" target="_blank" rel="noopener">ค้นหาจุดน้ำท่วม</a>${SCRIPT_URL?`<button class="linkbtn" data-rep="${a.id}">แจ้ง</button>`:""}</div>
+      <div class="status"><span class="dot c${k}"></span>${w?CAT[k]+" (24 ชม.)":"กำลังโหลดข้อมูลฝน"}${w&&w.now>0?`<span class="now">ฝนกำลังตก</span>`:""}</div>
+      ${w?`<div class="figs"><span>24 ชม.ที่ผ่านมา<b class="num">${mm(w.past24)}</b></span><span>6 ชม.ข้างหน้า<b class="num">${mm(w.next6)}</b></span><span>โอกาสฝน<b class="num">${w.prob}%</b></span></div>`:""}
+      <div class="links"><a href="${gmaps(a)}" target="_blank" rel="noopener">Google Maps จราจร</a><a href="${gsearch(a)}" target="_blank" rel="noopener">ค้นหาจุดน้ำท่วม</a></div>
     </article>`}).join("");
-  $("#areas").querySelectorAll("[data-rep]").forEach(b=>b.addEventListener("click",()=>{$("#f-area").value=b.dataset.rep;$("#rf").scrollIntoView({block:"center"});$("#f-area").focus()}));
 }
-function renderFeed(){
-  const key=$("#admin-key").value;
-  const items=[...reports].sort((a,b)=>b.ts-a.ts).slice(0,40);
-  $("#feed").innerHTML=items.length?items.map(r=>{const f=isFlood(r);return `<li>${f?`<span class="dot st${r.level}"></span>`:`<span class="inc ${r.type}" style="width:16px;height:16px;font-size:9px;margin-top:4px">${TYPES[r.type].s}</span>`}<div>
-    <div><b>${esc(byId[r.area].n)}</b> · ${f?LV[r.level]:TYPES[r.type].t}</div>
-    ${r.road||r.note?`<div class="detail" style="font-size:.86rem">${esc([r.road,r.note].filter(Boolean).join(" · "))}</div>`:""}
-    <div class="meta"><span class="num">${fmt.format(r.ts)}</span>${r.name?" · "+esc(r.name):""}${r.lat&&r.lng?` · <a href="https://www.google.com/maps?q=${Number(r.lat)},${Number(r.lng)}" target="_blank" rel="noopener">ดูจุด</a>`:""}${key?` · <button class="linkbtn" data-del="${esc(r.id)}">ลบ</button>`:""}</div></div></li>`}).join("")
-    :`<li><span></span><div class="muted">${SCRIPT_URL?"ยังไม่มีรายงาน":"เชื่อม Google Sheet ก่อนเพื่อรับรายงาน"}</div></li>`;
-  $("#feed").querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click",async()=>{
-    if(b.dataset.armed!=="1"){b.dataset.armed="1";b.textContent="ยืนยันลบ";setTimeout(()=>{b.dataset.armed="";b.textContent="ลบ"},3000);return}
-    try{await post({action:"delete",id:b.dataset.del,key:$("#admin-key").value});await loadReports();renderAll()}
-    catch(e){toast("ลบไม่สำเร็จ: "+e.message)}
-  }));
-}
-function renderAll(){renderSummary();renderMarkers();renderAreas();renderFeed()}
+function renderAll(){renderSummary();renderMarkers();renderAreas()}
 
 function focusArea(id){
   if(prov!=="all"&&byId[id].p!==prov)setProv("all");
-  hl=id;renderAreas();$("#f-area").value=id;
+  hl=id;renderAreas();
   const el=document.getElementById("area-"+id);
   if(el)el.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"center"});
 }
 function setProv(p){prov=p;document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-pressed",String(t.dataset.p===p)));renderAreas()}
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>setProv(t.dataset.p)));
 
-/* ---------- Form ---------- */
-$("#types").innerHTML=Object.entries(TYPES).map(([k,v])=>`<button type="button" class="ghost" data-type="${k}" aria-pressed="${k==="flood"}">${v.t}</button>`).join("");
-function setType(t){
-  ftype=t;document.querySelectorAll("[data-type]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.type===t)));
-  $("#lv-wrap").hidden=t!=="flood";
-  $("#f-note").placeholder=t==="flood"?"ความสูงน้ำประมาณ รถผ่านได้หรือไม่":t==="accident"?"รถกี่คัน ปิดกี่ช่องจราจร มีผู้บาดเจ็บหรือไม่":t==="jam"?"ติดยาวถึงไหน สาเหตุ":"ปิดช่วงไหน เลี่ยงทางไหนได้";
-}
-document.querySelectorAll("[data-type]").forEach(b=>b.addEventListener("click",()=>setType(b.dataset.type)));
-$("#f-area").innerHTML=["bkk","spk"].map(p=>`<optgroup label="${p==="bkk"?"กรุงเทพฯ":"สมุทรปราการ"}">${AREAS.filter(a=>a.p===p).map(a=>`<option value="${a.id}">${a.n}</option>`).join("")}</optgroup>`).join("");
-$("#levels").innerHTML=LV.map((t,k)=>`<label class="lv"><input type="radio" name="lv" id="lv-${k}" value="${k}" ${k===1?"checked":""}><span><span class="dot st${k}"></span>${t}</span></label>`).join("");
-try{const a=localStorage.getItem("fw-area");if(a&&byId[a])$("#f-area").value=a;$("#f-name").value=localStorage.getItem("fw-name")||"";$("#admin-key").value=localStorage.getItem("fw-key")||""}catch(e){}
-$("#admin-key").addEventListener("input",e=>{try{localStorage.setItem("fw-key",e.target.value)}catch(_){}renderFeed()});
-
-$("#rf").addEventListener("submit",async e=>{
-  e.preventDefault();
-  if(!SCRIPT_URL){toast("ยังไม่ได้เชื่อม Google Sheet");return}
-  if(ftype!=="flood"&&!pin&&!$("#f-road").value.trim()){toast("ระบุถนนหรือปักหมุดตำแหน่งเหตุ");return}
-  const data={action:"add",type:ftype,area:$("#f-area").value,
-    level:ftype==="flood"?Number(document.querySelector('input[name="lv"]:checked').value):-1,
-    road:$("#f-road").value.trim(),note:$("#f-note").value.trim(),name:$("#f-name").value.trim(),
-    lat:pin?pin.lat:"",lng:pin?pin.lng:""};
-  const btn=$("#f-submit");btn.disabled=true;toast("กำลังบันทึก…");
-  try{
-    await post(data);
-    try{localStorage.setItem("fw-area",data.area);localStorage.setItem("fw-name",data.name)}catch(_){}
-    $("#f-road").value="";$("#f-note").value="";clearPin();toast("บันทึกแล้ว · "+TYPES[ftype].t+" · "+byId[data.area].n);
-    await loadReports();renderAll();
-  }catch(err){toast("บันทึกไม่สำเร็จ: "+err.message)}
-  finally{btn.disabled=false}
-});
-
 /* ---------- Boot ---------- */
 function tick(){$("#now").textContent=new Intl.DateTimeFormat("th-TH",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit",timeZone:"Asia/Bangkok"}).format(Date.now())}
-if(!SCRIPT_URL){$("#setup").hidden=false;$("#f-submit").disabled=true}
 tick();renderAll();
 if(document.readyState==="complete")initLongdo();else window.addEventListener("load",initLongdo);
-Promise.all([loadReports(),loadRain(),loadRadar()]).then(renderAll);
-setInterval(()=>{tick();loadReports().then(renderAll)},60e3);
+Promise.all([loadRain(),loadRadar()]).then(renderAll);
+setInterval(tick,60e3);
 setInterval(()=>{loadRain().then(renderAll);loadRadar()},10*60e3);
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change",renderMarkers);
 </script>
