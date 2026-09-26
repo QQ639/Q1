@@ -81,6 +81,28 @@ header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:end;justify-content
 .src{display:grid;gap:2px;padding:10px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--line);text-decoration:none;color:var(--ink)}
 .src b{font-weight:600;color:var(--accent)}
 .src span{font-size:.82rem;color:var(--muted)}
+.fc-head{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.fc-head select{font:inherit;font-size:.95rem;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.readout{font-size:.85rem;min-height:1.5em;color:var(--ink)}
+.readout .muted{font-size:.8rem}
+.chart{width:100%;height:auto;display:block;touch-action:pan-y}
+.chart text{font-family:var(--body);font-size:11px;fill:var(--muted)}
+.chart .ttl{font-family:var(--display);font-size:12px;fill:var(--ink);font-weight:600}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .bar{fill:var(--r2)}
+.chart .bar.hv{fill:var(--r3)}
+.chart .tide{fill:none;stroke:var(--r2);stroke-width:2;stroke-linejoin:round}
+.chart .band{fill:var(--r3);opacity:.14}
+.chart .cursor{stroke:var(--ink);stroke-width:1;opacity:.5}
+.chart .peak{fill:var(--r3);stroke:var(--surface);stroke-width:2}
+.chart .plab{fill:var(--ink);font-size:10.5px}
+.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+@media (max-width:560px){.days{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.day{border:1px solid var(--line);border-radius:8px;padding:8px;display:grid;gap:2px;font-size:.8rem;background:var(--surface)}
+.day .d{font-weight:600;font-size:.82rem}
+.day .v{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:.95rem;color:var(--ink)}
+.day .p{color:var(--muted)}
+.linkbtn{background:none;border:0;padding:0;font:inherit;color:var(--accent);cursor:pointer;text-decoration:underline}
 footer{font-size:.8rem;color:var(--muted)}
 </style>
 </head>
@@ -133,6 +155,20 @@ footer{font-size:.8rem;color:var(--muted)}
     </div>
     <div class="areas" id="areas"></div>
     <div class="note">ระดับฝนตามเกณฑ์กรมอุตุนิยมวิทยา (ฝนสะสม 24 ชม.): เล็กน้อย 0.1–10 มม. · ปานกลาง 10.1–35 มม. · หนัก 35.1–90 มม. · หนักมาก มากกว่า 90 มม. · ตัวเลขจากแบบจำลอง Open-Meteo ใช้ดูแนวโน้ม ไม่ใช่ค่าจากสถานีวัด</div>
+  </section>
+
+  <section class="panel stack" aria-labelledby="fc-h" id="forecast">
+    <div class="headrow">
+      <h2 id="fc-h">พยากรณ์ล่วงหน้า</h2>
+      <div class="fc-head"><label for="fc-area" class="note">พื้นที่</label><select id="fc-area"></select></div>
+    </div>
+    <div class="readout" id="readout" aria-live="polite">แตะหรือชี้บนกราฟเพื่อดูค่ารายชั่วโมง</div>
+    <svg class="chart" id="ch-rain" viewBox="0 0 640 170" role="img" aria-label="กราฟฝนรายชั่วโมง 48 ชั่วโมงข้างหน้า"></svg>
+    <svg class="chart" id="ch-tide" viewBox="0 0 640 150" role="img" aria-label="กราฟระดับน้ำทะเล 48 ชั่วโมงข้างหน้า"></svg>
+    <div class="note">แถบสีส้มคือช่วงน้ำทะเลขึ้นสูง ถ้าฝนหนักตรงกับช่วงนี้ น้ำจะระบายช้า โดยเฉพาะพื้นที่ติดแม่น้ำเจ้าพระยาและชายทะเล (พระประแดง เมืองสมุทรปราการ พระสมุทรเจดีย์ บางขุนเทียน) · ระดับน้ำทะเลจากแบบจำลองบริเวณปากอ่าวไทย ใช้ดูจังหวะน้ำขึ้นลง ไม่ใช่ค่าวัดจริงของกรมอุทกศาสตร์</div>
+    <h3 style="font-size:1rem;margin-top:4px">แนวโน้มฝน 7 วัน</h3>
+    <div class="days" id="days"></div>
+    <div class="note">วันที่ 4–7 ความแม่นยำลดลง ใช้ดูแนวโน้มเท่านั้น</div>
   </section>
 
   <section class="stack" aria-labelledby="src-h">
@@ -245,19 +281,129 @@ function syncLongdo(){
 /* ---------- Rain model ---------- */
 async function loadRain(){
   const lat=AREAS.map(a=>a.lat).join(","),lng=AREAS.map(a=>a.lng).join(",");
-  const u=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=precipitation&hourly=precipitation,precipitation_probability&past_hours=24&forecast_hours=6&timezone=Asia%2FBangkok&timeformat=unixtime`;
+  const u=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=precipitation&hourly=precipitation,precipitation_probability&past_hours=24&forecast_hours=48&daily=precipitation_sum,precipitation_probability_max&forecast_days=7&timezone=Asia%2FBangkok&timeformat=unixtime`;
   try{
     let j=await (await fetch(u)).json();if(!Array.isArray(j))j=[j];
     j.forEach((d,i)=>{
       const a=AREAS[i];if(!a||!d.hourly)return;
       const t=d.hourly.time,p=d.hourly.precipitation,pr=d.hourly.precipitation_probability,now=d.current.time;
-      let past24=0,next6=0,prob=0;
-      t.forEach((ti,x)=>{if(ti<=now)past24+=p[x]||0;else{next6+=p[x]||0;prob=Math.max(prob,pr[x]||0)}});
-      rain[a.id]={now:d.current.precipitation||0,past24,next6,prob};
+      let past24=0,next6=0,prob=0;const fut=[];
+      t.forEach((ti,x)=>{
+        if(ti<=now){past24+=p[x]||0;return}
+        fut.push({t:ti,p:p[x]||0,pr:pr[x]||0});
+        if(fut.length<=6){next6+=p[x]||0;prob=Math.max(prob,pr[x]||0)}
+      });
+      const daily=(d.daily&&d.daily.time||[]).map((ti,x)=>({t:ti,sum:d.daily.precipitation_sum[x]||0,pr:d.daily.precipitation_probability_max[x]||0}));
+      rain[a.id]={now:d.current.precipitation||0,past24,next6,prob,fut,daily};
     });
     $("#sync").textContent="อัปเดตฝน "+fmtT.format(Date.now());
   }catch(e){$("#sync").textContent="ดึงข้อมูลฝนไม่ได้ จะลองใหม่"}
 }
+
+/* ---------- Tide (Open-Meteo Marine, ปากอ่าวไทย) ---------- */
+let tide=null;
+async function loadTide(){
+  try{
+    const j=await (await fetch("https://marine-api.open-meteo.com/v1/marine?latitude=13.45&longitude=100.60&hourly=sea_level_height_msl&forecast_hours=49&timezone=Asia%2FBangkok&timeformat=unixtime")).json();
+    const t=j.hourly.time,v=j.hourly.sea_level_height_msl;
+    const pts=t.map((ti,x)=>({t:ti,v:v[x]})).filter(o=>o.v!=null);
+    tide=pts.length>6?pts:null;
+  }catch(e){tide=null}
+}
+
+/* ---------- Forecast charts ---------- */
+const fmtH=new Intl.DateTimeFormat("th-TH",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Bangkok"});
+const fmtD=new Intl.DateTimeFormat("th-TH",{weekday:"short",day:"numeric",timeZone:"Asia/Bangkok"});
+const fmtDH=new Intl.DateTimeFormat("th-TH",{weekday:"short",hour:"2-digit",minute:"2-digit",timeZone:"Asia/Bangkok"});
+const hourOf=ts=>+new Intl.DateTimeFormat("en-GB",{hour:"numeric",hourCycle:"h23",timeZone:"Asia/Bangkok"}).format(ts*1000);
+let fcArea=null,fcHover=-1;
+const CW=640,PL=40,PR=10;
+function niceMax(v){for(const n of[1,2,5,10,20,30,50,100,200])if(v<=n)return n;return Math.ceil(v/100)*100}
+function highTideSet(){
+  if(!tide)return new Set();
+  const vs=tide.map(o=>o.v).sort((a,b)=>a-b),q=vs[Math.floor(vs.length*.75)];
+  return new Set(tide.filter(o=>o.v>=q).map(o=>o.t));
+}
+function xAxis(times,H,bot){
+  const n=times.length,step=(CW-PL-PR)/n;let g="";
+  times.forEach((t,i)=>{
+    const h=hourOf(t),x=PL+i*step+step/2;
+    if(h===0){g+=`<line class="grid" x1="${PL+i*step}" x2="${PL+i*step}" y1="18" y2="${H-bot}" stroke-dasharray="3 3"/><text x="${PL+i*step+3}" y="${H-4}" style="fill:var(--ink)">${fmtD.format(t*1000)}</text>`}
+    else if(h%6===0){g+=`<text x="${x}" y="${H-4}" text-anchor="middle">${String(h).padStart(2,"0")}:00</text>`}
+  });
+  return g;
+}
+function bands(times,step,top,ph){
+  const ht=highTideSet();let g="",st=-1;
+  times.forEach((t,i)=>{const on=ht.has(t);if(on&&st<0)st=i;if((!on||i===times.length-1)&&st>=0){const e=on?i+1:i;g+=`<rect class="band" x="${PL+st*step}" y="${top}" width="${(e-st)*step}" height="${ph}"/>`;st=-1}});
+  return g;
+}
+function drawRain(){
+  const el=$("#ch-rain"),w=rain[fcArea];
+  if(!w||!w.fut.length){el.innerHTML=`<text x="${CW/2}" y="85" text-anchor="middle">กำลังโหลดพยากรณ์ฝน…</text>`;return}
+  const H=170,top=24,bot=22,f=w.fut,n=f.length,step=(CW-PL-PR)/n,ph=H-top-bot;
+  const mx=niceMax(Math.max(1,...f.map(o=>o.p))),Y=v=>top+ph-(v/mx)*ph,ht=highTideSet();
+  let g=`<text class="ttl" x="${PL}" y="13">ฝนรายชั่วโมง (มม.) 48 ชม.ข้างหน้า</text>`;
+  g+=bands(f.map(o=>o.t),step,top,ph);
+  [0,mx/2,mx].forEach(v=>{g+=`<line class="grid" x1="${PL}" x2="${CW-PR}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${PL-6}" y="${Y(v)+4}" text-anchor="end" class="num">${v}</text>`});
+  f.forEach((o,i)=>{if(o.p<=0)return;const bw=Math.max(2,step-2),h=Math.max(1.5,Y(0)-Y(o.p));
+    g+=`<rect class="bar${o.p>=10?" hv":""}" x="${PL+i*step+1}" y="${Y(0)-h}" width="${bw}" height="${h}" rx="2"/>`});
+  if(f.every(o=>o.p<=0))g+=`<text x="${(CW+PL)/2}" y="${top+ph/2}" text-anchor="middle">ไม่มีฝนในแบบจำลอง 48 ชม.ข้างหน้า</text>`;
+  g+=xAxis(f.map(o=>o.t),H,bot);
+  if(fcHover>=0&&fcHover<n)g+=`<line class="cursor" x1="${PL+fcHover*step+step/2}" x2="${PL+fcHover*step+step/2}" y1="${top}" y2="${H-bot}"/>`;
+  el.innerHTML=g;
+}
+function drawTide(){
+  const el=$("#ch-tide"),w=rain[fcArea];
+  if(!tide){el.innerHTML=`<text class="ttl" x="${PL}" y="13">ระดับน้ำทะเล (ม.)</text><text x="${CW/2}" y="80" text-anchor="middle">ยังไม่มีข้อมูลระดับน้ำทะเล</text>`;return}
+  const times=w&&w.fut.length?w.fut.map(o=>o.t):tide.slice(1).map(o=>o.t);
+  const byT=Object.fromEntries(tide.map(o=>[o.t,o.v]));
+  const H=150,top=24,bot=22,n=times.length,step=(CW-PL-PR)/n,ph=H-top-bot;
+  const vals=times.map(t=>byT[t]).filter(v=>v!=null),lo=Math.min(...vals),hi=Math.max(...vals),pad=(hi-lo)*.15||.1;
+  const y0=lo-pad,y1=hi+pad,Y=v=>top+ph-((v-y0)/(y1-y0))*ph,X=i=>PL+i*step+step/2,ht=highTideSet();
+  let g=`<text class="ttl" x="${PL}" y="13">ระดับน้ำทะเล ปากอ่าวไทย (ม.)</text>`;
+  g+=bands(times,step,top,ph);
+  [lo,(lo+hi)/2,hi].forEach(v=>{g+=`<line class="grid" x1="${PL}" x2="${CW-PR}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${PL-6}" y="${Y(v)+4}" text-anchor="end" class="num">${v.toFixed(1)}</text>`});
+  const pts=times.map((t,i)=>byT[t]==null?null:[X(i),Y(byT[t])]);
+  g+=`<polyline class="tide" points="${pts.filter(Boolean).map(p=>p.join(",")).join(" ")}"/>`;
+  times.forEach((t,i)=>{const v=byT[t];if(v==null)return;const a=byT[times[i-1]],b=byT[times[i+1]];
+    if(a!=null&&b!=null&&v>=a&&v>b&&v>=(lo+hi)/2){const[x,y]=pts[i];g+=`<circle class="peak" cx="${x}" cy="${y}" r="4.5"/><text class="plab" x="${x}" y="${y-8}" text-anchor="middle">${fmtH.format(t*1000)}</text>`}});
+  g+=xAxis(times,H,bot);
+  if(fcHover>=0&&fcHover<n)g+=`<line class="cursor" x1="${X(fcHover)}" x2="${X(fcHover)}" y1="${top}" y2="${H-bot}"/>`;
+  el.innerHTML=g;
+}
+function drawDays(){
+  const w=rain[fcArea];
+  $("#days").innerHTML=w&&w.daily.length?w.daily.map(d=>{const k=cat(d.sum);return `<div class="day"><span class="d">${fmtD.format(d.t*1000)}</span><span class="status"><span class="dot c${k}"></span>${CAT[k]}</span><span class="v">${mm(d.sum)}</span><span class="p">โอกาสฝน ${d.pr}%</span></div>`}).join(""):`<div class="note">กำลังโหลด…</div>`;
+}
+function renderReadout(){
+  const w=rain[fcArea];
+  if(!w||fcHover<0||!w.fut[fcHover]){
+    if(w&&w.fut.length){const tot=w.fut.reduce((s,o)=>s+o.p,0),pk=w.fut.reduce((m,o)=>o.p>m.p?o:m,w.fut[0]);
+      $("#readout").innerHTML=`${esc(byId[fcArea].n)} · ฝนรวม 48 ชม. <b class="num">${mm(tot)}</b>${pk.p>0?` · หนักสุดช่วง <b>${fmtDH.format(pk.t*1000)}</b> (<span class="num">${mm(pk.p)}</span>)`:""} <span class="muted">· ชี้บนกราฟเพื่อดูรายชั่วโมง</span>`}
+    return}
+  const o=w.fut[fcHover],tv=tide&&tide.find(x=>x.t===o.t);
+  $("#readout").innerHTML=`<b>${fmtDH.format(o.t*1000)}</b> · ฝน <b class="num">${mm(o.p)}</b> · โอกาสฝน <b class="num">${o.pr}%</b>${tv?` · ระดับน้ำทะเล <b class="num">${tv.v.toFixed(2)} ม.</b>`:""}${highTideSet().has(o.t)?` · <span style="color:var(--r3);font-weight:600">ช่วงน้ำขึ้นสูง</span>`:""}`;
+}
+function renderForecast(){
+  if(!fcArea&&Object.keys(rain).length){let best=AREAS[0].id,b=-1;AREAS.forEach(a=>{const w=rain[a.id];if(!w)return;const s=w.fut.reduce((x,o)=>x+o.p,0);if(s>b){b=s;best=a.id}});fcArea=best;$("#fc-area").value=best}
+  if(!fcArea){drawRain();drawTide();drawDays();return}
+  drawRain();drawTide();drawDays();renderReadout();
+}
+function hoverFrom(ev,el){
+  const r=el.getBoundingClientRect(),x=(ev.clientX-r.left)/r.width*CW,w=rain[fcArea];
+  const n=w&&w.fut.length?w.fut.length:48,i=Math.floor((x-PL)/((CW-PL-PR)/n));
+  const ni=(i>=0&&i<n)?i:-1;if(ni!==fcHover){fcHover=ni;drawRain();drawTide();renderReadout()}
+}
+["#ch-rain","#ch-tide"].forEach(id=>{const el=$(id);
+  el.addEventListener("pointermove",e=>hoverFrom(e,el));
+  el.addEventListener("mousemove",e=>hoverFrom(e,el));
+  el.addEventListener("pointerdown",e=>hoverFrom(e,el));
+  el.addEventListener("pointerleave",()=>{fcHover=-1;drawRain();drawTide();renderReadout()});
+});
+$("#fc-area").innerHTML=["bkk","spk"].map(p=>`<optgroup label="${p==="bkk"?"กรุงเทพฯ":"สมุทรปราการ"}">${AREAS.filter(a=>a.p===p).map(a=>`<option value="${a.id}">${a.n}</option>`).join("")}</optgroup>`).join("");
+$("#fc-area").addEventListener("change",e=>{fcArea=e.target.value;fcHover=-1;renderForecast()});
+function showForecast(id){fcArea=id;$("#fc-area").value=id;fcHover=-1;renderForecast();$("#forecast").scrollIntoView({block:"start",behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"})}
 
 /* ---------- Render ---------- */
 function renderSummary(){
@@ -275,10 +421,11 @@ function renderAreas(){
       <div class="area-top"><h3>${esc(a.n)}</h3><span class="prov-tag">${a.p==="bkk"?"กทม.":"สมุทรปราการ"}</span></div>
       <div class="status"><span class="dot c${k}"></span>${w?CAT[k]+" (24 ชม.)":"กำลังโหลดข้อมูลฝน"}${w&&w.now>0?`<span class="now">ฝนกำลังตก</span>`:""}</div>
       ${w?`<div class="figs"><span>24 ชม.ที่ผ่านมา<b class="num">${mm(w.past24)}</b></span><span>6 ชม.ข้างหน้า<b class="num">${mm(w.next6)}</b></span><span>โอกาสฝน<b class="num">${w.prob}%</b></span></div>`:""}
-      <div class="links"><a href="${gmaps(a)}" target="_blank" rel="noopener">Google Maps จราจร</a><a href="${gsearch(a)}" target="_blank" rel="noopener">ค้นหาจุดน้ำท่วม</a></div>
+      <div class="links"><a href="${gmaps(a)}" target="_blank" rel="noopener">Google Maps จราจร</a><a href="${gsearch(a)}" target="_blank" rel="noopener">ค้นหาจุดน้ำท่วม</a><button class="linkbtn" data-fc="${a.id}">พยากรณ์ 48 ชม.</button></div>
     </article>`}).join("");
+  $("#areas").querySelectorAll("[data-fc]").forEach(b=>b.addEventListener("click",()=>showForecast(b.dataset.fc)));
 }
-function renderAll(){renderSummary();renderMarkers();renderAreas()}
+function renderAll(){renderSummary();renderMarkers();renderAreas();renderForecast()}
 
 function focusArea(id){
   if(prov!=="all"&&byId[id].p!==prov)setProv("all");
@@ -293,9 +440,9 @@ document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>setP
 function tick(){$("#now").textContent=new Intl.DateTimeFormat("th-TH",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit",timeZone:"Asia/Bangkok"}).format(Date.now())}
 tick();renderAll();
 if(document.readyState==="complete")initLongdo();else window.addEventListener("load",initLongdo);
-Promise.all([loadRain(),loadRadar()]).then(renderAll);
+Promise.all([loadRain(),loadRadar(),loadTide()]).then(renderAll);
 setInterval(tick,60e3);
-setInterval(()=>{loadRain().then(renderAll);loadRadar()},10*60e3);
+setInterval(()=>{Promise.all([loadRain(),loadTide()]).then(renderAll);loadRadar()},10*60e3);
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change",renderMarkers);
 </script>
 </body>
