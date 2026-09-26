@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://api.longdo.com/map/?key=6782512d8f94242e84340b8cdda7db91"></script>
 <style>
 :root{
   color-scheme:light;
@@ -336,19 +337,16 @@ $("#pin-gps").addEventListener("click",()=>{
 let lmap=null;
 function initLongdo(){
   const box=$("#tmap");
-  if(!LONGDO_KEY){$("#tmap-empty").innerHTML=`ยังไม่ได้ใส่คีย์ Longdo Map<br><a href="https://www.google.com/maps/@13.72,100.62,11z/data=!5m1!1e1" target="_blank" rel="noopener">เปิดดูจราจรใน Google Maps</a>`;return}
-  const s=document.createElement("script");
-  s.src="https://api.longdo.com/map/?key="+encodeURIComponent(LONGDO_KEY);
-  s.onload=()=>{
-    try{
-      $("#tmap-empty").remove();
-      lmap=new longdo.Map({placeholder:box,layer:[longdo.Layers.NORMAL,longdo.Layers.TRAFFIC],zoom:11,location:{lon:100.62,lat:13.72},lastView:false,language:"th"});
-      lmap.Overlays.load(longdo.Overlays.events);
-      syncLongdo();
-    }catch(e){box.innerHTML=`<div class="tmap-empty">โหลดแผนที่จราจรไม่ได้ ตรวจคีย์ Longdo และโดเมนที่ลงทะเบียน</div>`}
-  };
-  s.onerror=()=>{$("#tmap-empty").textContent="โหลดแผนที่จราจรไม่ได้ ลองรีเฟรชหน้า"};
-  document.head.appendChild(s);
+  if(typeof longdo==="undefined"){$("#tmap-empty").innerHTML=`โหลดสคริปต์ Longdo ไม่ได้ (คีย์หรือโดเมนไม่ผ่าน)<br><a href="https://www.google.com/maps/@13.72,100.62,11z/data=!5m1!1e1" target="_blank" rel="noopener">เปิดดูจราจรใน Google Maps</a>`;return}
+  try{
+    $("#tmap-empty").remove();
+    lmap=new longdo.Map({placeholder:box,zoom:11,location:{lon:100.62,lat:13.72},lastView:false});
+    try{lmap.Layers.setBase(longdo.Layers.NORMAL)}catch(_){}
+    syncLongdo();
+  }catch(e){
+    console.error("longdo",e);
+    box.innerHTML=`<div class="tmap-empty">แผนที่จราจรมีปัญหา: ${esc(e&&e.message||e)}</div>`;
+  }
 }
 function syncLongdo(){
   if(!lmap)return;
@@ -475,7 +473,8 @@ $("#rf").addEventListener("submit",async e=>{
 /* ---------- Boot ---------- */
 function tick(){$("#now").textContent=new Intl.DateTimeFormat("th-TH",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit",timeZone:"Asia/Bangkok"}).format(Date.now())}
 if(!SCRIPT_URL){$("#setup").hidden=false;$("#f-submit").disabled=true}
-tick();renderAll();initLongdo();
+tick();renderAll();
+if(document.readyState==="complete")initLongdo();else window.addEventListener("load",initLongdo);
 Promise.all([loadReports(),loadRain(),loadRadar()]).then(renderAll);
 setInterval(()=>{tick();loadReports().then(renderAll)},60e3);
 setInterval(()=>{loadRain().then(renderAll);loadRadar()},10*60e3);
